@@ -1,0 +1,2010 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'" data-dsh-artifacts>
+<meta name="robots" content="noindex, nofollow" data-dsh-artifacts>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Grsai Studio · 图像与视频生成</title>
+<style>
+  :root {
+    --bg: #f4f2ed;
+    --surface: #ffffff;
+    --surface-2: #faf8f4;
+    --surface-3: #f0ede6;
+    --ink: #1c1d1f;
+    --muted: #6f7075;
+    --faint: #9a9a9f;
+    --line: #e4e0d8;
+    --line-strong: #d4cfc4;
+    --accent: #b4552d;
+    --accent-hover: #9e4825;
+    --accent-soft: #f2e2d8;
+    --accent-ink: #ffffff;
+    --danger: #b3403a;
+    --success: #3d7a5c;
+    --shadow: 0 1px 2px rgba(28, 29, 31, .04), 0 10px 30px rgba(28, 29, 31, .05);
+    --shadow-lg: 0 24px 80px rgba(28, 29, 31, .18);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg: #141519;
+    --surface: #1c1e23;
+    --surface-2: #202228;
+    --surface-3: #282b32;
+    --ink: #ecebe6;
+    --muted: #a0a2a8;
+    --faint: #777a82;
+    --line: #2c2f37;
+    --line-strong: #3a3e47;
+    --accent: #df9a72;
+    --accent-hover: #edb08b;
+    --accent-soft: #3a2a22;
+    --accent-ink: #1b1511;
+    --danger: #e08a84;
+    --success: #8fc7a8;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .25), 0 14px 40px rgba(0, 0, 0, .22);
+    --shadow-lg: 0 30px 100px rgba(0, 0, 0, .55);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--accent-soft); color: var(--ink); }
+
+  .app {
+    display: grid;
+    grid-template-columns: 218px minmax(0, 1fr) 322px;
+    grid-template-rows: 58px minmax(0, 1fr);
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 30;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), #e7b18e 70%, #f3d7c4);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.28), 0 6px 16px rgba(180, 85, 45, .18);
+    flex: none;
+    position: relative;
+  }
+  .brand-mark::after {
+    content: "";
+    position: absolute; inset: 8px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.72);
+    border-right-color: transparent;
+    transform: rotate(-35deg);
+  }
+  .brand-text { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .brand-text strong { font-size: 15px; letter-spacing: -.01em; white-space: nowrap; }
+  .brand-text span { font-size: 11px; color: var(--faint); white-space: nowrap; }
+  .top-actions { display: flex; align-items: center; gap: 8px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 6px 11px;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+    transition: border-color .18s, color .18s, background .18s;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--line-strong); }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+  .chip.ok .dot { background: var(--success); }
+  .chip.warn .dot { background: var(--accent); }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 9px;
+    display: grid; place-items: center;
+    transition: background .18s, color .18s, border-color .18s;
+  }
+  .icon-btn:hover { background: var(--surface); color: var(--ink); border-color: var(--line); }
+  .icon-btn:focus-visible, .chip:focus-visible, .mode-btn:focus-visible, .btn:focus-visible,
+  input:focus-visible, select:focus-visible, textarea:focus-visible, .history-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- sidebar ---------- */
+  .sidebar {
+    grid-column: 1; grid-row: 2;
+    display: flex; flex-direction: column; gap: 18px;
+    padding: 18px 14px 16px;
+    border-right: 1px solid var(--line);
+    background: var(--surface-2);
+    overflow: auto;
+    min-height: 0;
+  }
+  .side-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--faint); padding: 0 8px;
+  }
+  .mode-list { display: flex; flex-direction: column; gap: 6px; }
+  .mode-btn {
+    display: flex; align-items: center; gap: 11px;
+    width: 100%; padding: 10px 11px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    text-align: left;
+    transition: background .18s, border-color .18s, color .18s;
+  }
+  .mode-btn:hover { background: var(--surface); color: var(--ink); }
+  .mode-btn.active {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .mode-icon {
+    width: 30px; height: 30px; border-radius: 9px;
+    display: grid; place-items: center;
+    background: var(--surface-3);
+    color: var(--muted);
+    flex: none;
+  }
+  .mode-btn.active .mode-icon { background: var(--accent); color: var(--accent-ink); }
+  .mode-copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .mode-copy strong { font-size: 13px; font-weight: 600; }
+  .mode-copy small { font-size: 10.5px; color: var(--faint); }
+
+  .side-divider { height: 1px; background: var(--line); margin: 0 8px; }
+  .side-block { display: flex; flex-direction: column; gap: 8px; }
+  .side-model {
+    margin: 0 8px;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+  .side-model small { display: block; font-size: 10px; color: var(--faint); margin-bottom: 4px; letter-spacing: .06em; text-transform: uppercase; }
+  .side-model strong { display: block; font-size: 12.5px; font-weight: 600; line-height: 1.35; word-break: break-word; }
+  .key-card {
+    margin: 0 8px;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .key-card .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .key-card .row span { font-size: 11px; color: var(--muted); }
+  .key-card .row b { font-size: 11px; font-weight: 600; }
+  .key-card .mini {
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 6px 9px;
+    font-size: 11.5px;
+    text-align: center;
+  }
+  .key-card .mini:hover { border-color: var(--line-strong); }
+  .side-note {
+    margin: auto 8px 0;
+    font-size: 10.5px;
+    line-height: 1.55;
+    color: var(--faint);
+  }
+  .side-note b { color: var(--muted); font-weight: 600; }
+
+  /* ---------- main ---------- */
+  .main {
+    grid-column: 2; grid-row: 2;
+    display: flex; flex-direction: column;
+    min-width: 0; min-height: 0;
+    background: var(--bg);
+  }
+  .stage {
+    flex: 1; min-height: 0; overflow: auto;
+    padding: 22px 24px 20px;
+    scrollbar-gutter: stable;
+  }
+  .stage-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stage-title { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+  .stage-title h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+  .stage-title span { font-size: 11px; color: var(--faint); }
+  .stage-actions { display: flex; align-items: center; gap: 8px; }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    padding: 5px 9px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .status-pill .pulse {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--faint);
+  }
+  .status-pill.busy .pulse { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+
+  .output-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+  .empty-state {
+    min-height: 320px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 20px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 9px;
+    color: var(--muted);
+    padding: 40px 24px;
+    background:
+      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 0) 0 0 / 22px 22px,
+      var(--surface-2);
+  }
+  .empty-orb {
+    width: 58px; height: 58px; border-radius: 18px;
+    background: linear-gradient(135deg, var(--surface), var(--surface-3));
+    border: 1px solid var(--line);
+    display: grid; place-items: center;
+    color: var(--accent);
+    margin-bottom: 4px;
+    box-shadow: var(--shadow);
+  }
+  .empty-state h2 { margin: 0; font-size: 15px; color: var(--ink); font-weight: 600; }
+  .empty-state p { margin: 0; max-width: 44ch; font-size: 12.5px; line-height: 1.6; }
+  .empty-state .hint { font-size: 11px; color: var(--faint); margin-top: 4px; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+    min-width: 0;
+    animation: rise .28s ease both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .result-media {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: var(--surface-2);
+    overflow: hidden;
+    display: grid; place-items: center;
+  }
+  .result-media.is-video { aspect-ratio: 16 / 10; background: #0d0e10; }
+  .result-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .result-media video { width: 100%; height: 100%; object-fit: contain; display: block; background: #0d0e10; }
+  .result-media .open-hint {
+    position: absolute; inset: auto 8px 8px auto;
+    background: rgba(10, 10, 12, .62);
+    color: #fff;
+    font-size: 10px;
+    padding: 4px 7px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity .18s;
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+  }
+  .result-media:hover .open-hint { opacity: 1; }
+  .result-media.skeleton { background: linear-gradient(100deg, var(--surface-2) 28%, var(--surface) 46%, var(--surface-2) 64%); background-size: 220% 100%; animation: shimmer 1.25s linear infinite; }
+  @keyframes shimmer { to { background-position: -220% 0; } }
+  .skeleton-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--faint); }
+  .spinner {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--line-strong);
+    border-top-color: var(--accent);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result-body { padding: 10px 12px 11px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .result-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .result-model { font-size: 11px; font-weight: 650; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result-time { font-size: 10px; color: var(--faint); white-space: nowrap; }
+  .result-params { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result-prompt { margin: 0; font-size: 11.5px; color: var(--muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .result-actions { display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+  .mini-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px; color: var(--muted);
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    border-radius: 7px;
+    padding: 4px 7px;
+    text-decoration: none;
+  }
+  .mini-link:hover { color: var(--ink); border-color: var(--line-strong); text-decoration: none; }
+  .result-error {
+    font-size: 11.5px; color: var(--danger); line-height: 1.5;
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
+    border-radius: 9px;
+    padding: 8px 9px;
+    word-break: break-word;
+  }
+  .result-media .retry {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  /* ---------- composer ---------- */
+  .composer {
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    padding: 13px 24px 16px;
+    display: flex; flex-direction: column; gap: 11px;
+    box-shadow: 0 -10px 30px rgba(0,0,0,.03);
+    z-index: 5;
+  }
+  .prompt-wrap { position: relative; }
+  textarea#prompt {
+    width: 100%;
+    min-height: 74px;
+    max-height: 160px;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface-2);
+    color: var(--ink);
+    padding: 12px 14px 25px;
+    line-height: 1.55;
+    outline: none;
+    transition: border-color .18s, box-shadow .18s;
+  }
+  textarea#prompt::placeholder { color: var(--faint); }
+  textarea#prompt:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .char-count { position: absolute; right: 12px; bottom: 8px; font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .controls {
+    display: grid;
+    grid-template-columns: minmax(190px, 2.1fr) repeat(3, minmax(108px, 1fr));
+    gap: 9px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .field > label { font-size: 10.5px; font-weight: 650; color: var(--faint); letter-spacing: .02em; }
+  select, input[type="number"], input[type="url"], input[type="text"], input[type="password"] {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--ink);
+    padding: 8px 9px;
+    font-size: 12.5px;
+    outline: none;
+    transition: border-color .18s, box-shadow .18s;
+  }
+  select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  select:disabled, input:disabled { opacity: .55; cursor: not-allowed; }
+  .field.hidden { display: none; }
+
+  .batch-row { display: flex; align-items: center; gap: 13px; flex-wrap: wrap; }
+  .batch-label { display: flex; align-items: baseline; gap: 7px; font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .batch-label b { font-size: 13px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .batch-slider { flex: 1; min-width: 160px; height: 22px; accent-color: var(--accent); cursor: pointer; }
+  .batch-hint { font-size: 10.5px; color: var(--faint); white-space: nowrap; }
+  .composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .shortcut { font-size: 10.5px; color: var(--faint); }
+  .shortcut kbd {
+    font-family: var(--mono); font-size: 9.5px;
+    border: 1px solid var(--line); border-bottom-width: 2px;
+    background: var(--surface-2); border-radius: 5px; padding: 1px 4px;
+  }
+  .actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .btn {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 11px;
+    padding: 9px 13px;
+    font-size: 12.5px;
+    font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    transition: background .18s, border-color .18s, transform .12s, opacity .18s;
+    white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--line-strong); background: var(--surface-2); }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    padding: 10px 18px;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, var(--line)); background: transparent; }
+  .btn-danger:hover { background: color-mix(in srgb, var(--danger) 7%, transparent); }
+  .btn-soft { background: var(--surface-2); }
+
+  /* ---------- history ---------- */
+  .history {
+    grid-column: 3; grid-row: 2;
+    display: flex; flex-direction: column;
+    min-height: 0;
+    border-left: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+  .history-head {
+    padding: 17px 15px 11px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .history-title { display: flex; align-items: baseline; gap: 7px; }
+  .history-title h2 { margin: 0; font-size: 12.5px; font-weight: 650; }
+  .history-title span { font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .history-tools { display: flex; align-items: center; gap: 3px; }
+  .history-list {
+    flex: 1; min-height: 0; overflow: auto;
+    padding: 0 10px 16px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .history-empty {
+    padding: 26px 14px;
+    text-align: center;
+    color: var(--faint);
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+  .history-item {
+    display: flex; gap: 9px; align-items: center;
+    padding: 7px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: transparent;
+    text-align: left;
+    min-width: 0;
+    cursor: pointer;
+    transition: background .18s, border-color .18s;
+    position: relative;
+  }
+  .history-item:hover { background: var(--surface); border-color: var(--line); }
+  .history-thumb {
+    width: 50px; height: 50px; border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    overflow: hidden;
+    flex: none;
+    display: grid; place-items: center;
+    color: var(--faint);
+    font-size: 9px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    position: relative;
+  }
+  .history-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .history-thumb .video-mark {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #202329, #101114);
+    color: #e8e6e0;
+  }
+  .history-info { min-width: 0; flex: 1; }
+  .history-info strong { display: block; font-size: 11px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-info time { display: block; font-size: 9.5px; color: var(--faint); margin-top: 1px; }
+  .history-info p { margin: 2px 0 0; font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-del {
+    position: absolute; right: 5px; top: 5px;
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 0; background: var(--surface); color: var(--faint);
+    display: none; place-items: center;
+    font-size: 12px; line-height: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  .history-item:hover .history-del { display: grid; }
+  .history-del:hover { color: var(--danger); }
+
+  /* ---------- modal / lightbox ---------- */
+  .modal, .lightbox {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 18px;
+    background: rgba(12, 12, 14, .48);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .modal[hidden], .lightbox[hidden] { display: none; }
+  .modal-card {
+    width: min(440px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow-lg);
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 14px;
+    animation: rise .22s ease both;
+  }
+  .modal-card h2 { margin: 0; font-size: 17px; letter-spacing: -.01em; }
+  .modal-card p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .modal-field { display: flex; flex-direction: column; gap: 5px; }
+  .modal-field label { font-size: 10.5px; font-weight: 650; color: var(--faint); }
+  .key-row { display: flex; gap: 7px; }
+  .key-row input { flex: 1; }
+  .modal-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+  .modal-note { font-size: 10.5px; color: var(--faint); line-height: 1.6; }
+  .modal-note a { color: var(--accent); }
+
+  .lightbox { padding: 0; align-items: stretch; justify-content: stretch; background: rgba(8, 9, 11, .82); }
+  .lb-shell { width: 100%; height: 100%; display: flex; flex-direction: column; min-height: 0; }
+  .lb-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 16px;
+    color: #f0efeb;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+    background: rgba(10, 11, 13, .55);
+  }
+  .lb-title { font-size: 12.5px; color: #d8d7d2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-bar .icon-btn { color: #dad9d4; }
+  .lb-bar .icon-btn:hover { background: rgba(255,255,255,.1); border-color: transparent; }
+  .lb-body {
+    flex: 1; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 18px;
+    position: relative;
+  }
+  .lb-body img, .lb-body video { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  .lb-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.2);
+    background: rgba(20,21,24,.7);
+    color: #fff;
+    display: grid; place-items: center;
+    font-size: 18px;
+  }
+  .lb-nav.prev { left: 14px; }
+  .lb-nav.next { right: 14px; }
+  .lb-nav[hidden] { display: none; }
+  .lb-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 10px 16px 14px;
+    color: #b9b8b2;
+    font-size: 11px;
+  }
+  .lb-foot a { color: #f0efeb; border: 1px solid rgba(255,255,255,.22); border-radius: 8px; padding: 6px 10px; text-decoration: none; }
+  .lb-foot a:hover { background: rgba(255,255,255,.08); }
+
+  /* ---------- toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 12px);
+    z-index: 200;
+    max-width: min(520px, calc(100vw - 32px));
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 11px;
+    padding: 9px 14px;
+    font-size: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.22);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    line-height: 1.45;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.error { background: var(--danger); color: #fff; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1240px) {
+    .app { grid-template-columns: 198px minmax(0, 1fr) 286px; }
+    .controls { grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(96px, 1fr)); }
+  }
+  @media (max-width: 1080px) {
+    .app {
+      grid-template-columns: 188px minmax(0, 1fr);
+      grid-template-rows: 58px minmax(0, 1fr) 224px;
+    }
+    .history { grid-column: 2; grid-row: 3; border-left: 0; border-top: 1px solid var(--line); }
+    .history-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding-bottom: 12px; }
+    .history-item { min-width: 236px; max-width: 280px; }
+    .history-empty { width: 100%; padding: 14px; }
+    .main { grid-row: 2; }
+  }
+  @media (max-width: 820px) {
+    .app { display: flex; flex-direction: column; height: auto; min-height: 100vh; overflow: visible; }
+    .topbar { position: sticky; top: 0; height: 56px; }
+    .sidebar {
+      flex-direction: row; align-items: center; flex-wrap: nowrap;
+      overflow-x: auto;
+      padding: 9px 12px;
+      border-right: 0; border-bottom: 1px solid var(--line);
+      gap: 8px;
+    }
+    .side-label, .side-divider, .side-block, .key-card, .side-note, .side-model { display: none; }
+    .mode-list { flex-direction: row; gap: 6px; }
+    .mode-btn { width: auto; padding: 7px 10px; white-space: nowrap; }
+    .mode-icon { width: 25px; height: 25px; border-radius: 7px; }
+    .mode-copy small { display: none; }
+    .main { min-height: 72vh; }
+    .stage { padding: 16px; }
+    .composer { padding: 11px 16px 14px; }
+    .controls { grid-template-columns: 1fr 1fr; }
+    .field.model-field { grid-column: 1 / -1; }
+    .batch-hint { display: none; }
+    .history { min-height: 190px; }
+    .brand-text span { display: none; }
+  }
+  @media (max-width: 480px) {
+    .topbar { padding: 0 12px; }
+    .brand-text strong { font-size: 14px; }
+    .chip { padding: 5px 8px; font-size: 11px; }
+    .controls { grid-template-columns: 1fr; }
+    .field.model-field { grid-column: auto; }
+    .output-grid { grid-template-columns: 1fr; }
+    .stage-title h1 { font-size: 14px; }
+    .actions { width: 100%; }
+    .btn-primary { flex: 1; }
+    .shortcut { display: none; }
+  }
+  @media (hover: none) {
+    .history-del { display: grid; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div class="brand-text">
+        <strong>Grsai Studio</strong>
+        <span>图像 / 视频生成</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="chip warn" id="keyChip" type="button" title="配置 API Key">
+        <span class="dot"></span><span id="keyChipText">未配置 Key</span>
+      </button>
+      <button class="icon-btn" id="themeBtn" type="button" title="切换明暗主题" aria-label="切换明暗主题">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+          <path id="themeIcon" d="M12 3v2.2M12 18.8V21M4.22 4.22l1.56 1.56M18.22 18.22l1.56 1.56M3 12h2.2M18.8 12H21M4.22 19.78l1.56-1.56M18.22 5.78l1.56-1.56"/>
+          <circle cx="12" cy="12" r="3.6"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div>
+      <div class="side-label">创作模式</div>
+      <div class="mode-list" style="margin-top:7px">
+        <button class="mode-btn active" data-mode="image" type="button">
+          <span class="mode-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.4"/><path d="M21 15l-4.2-4.2a2 2 0 0 0-2.8 0L5 20"/></svg>
+          </span>
+          <span class="mode-copy"><strong>生图</strong><small>图片模型</small></span>
+        </button>
+        <button class="mode-btn" data-mode="video" type="button">
+          <span class="mode-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="13" height="14" rx="2.5"/><path d="M16 10l4-2.2v8.4L16 14"/></svg>
+          </span>
+          <span class="mode-copy"><strong>生视频</strong><small>视频模型</small></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="side-divider" aria-hidden="true"></div>
+
+    <div class="side-block">
+      <div class="side-label">当前模型</div>
+      <div class="side-model">
+        <small id="sideModelType">图像</small>
+        <strong id="sideModel">GPT Image 2 VIP</strong>
+      </div>
+    </div>
+
+    <div class="key-card">
+      <div class="row"><span>API Key</span><b id="keyState">未配置</b></div>
+      <button class="mini" id="keyBtn" type="button">设置 Grsai Key</button>
+    </div>
+
+    <div class="side-note">
+      <b>BYOK</b> · Key 只保存在本机浏览器，直连 Grsai，不经过任何中间服务器。<br>
+      历史记录同样只存在本机。
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="stage" id="stage" aria-label="生成结果">
+      <div class="stage-head">
+        <div class="stage-title">
+          <h1 id="stageTitle">图像输出</h1>
+          <span id="stageSub">等待创作</span>
+        </div>
+        <div class="stage-actions">
+          <span class="status-pill" id="statusPill"><span class="pulse"></span><span id="statusText">就绪</span></span>
+          <button class="icon-btn" id="clearOutputBtn" type="button" title="清空当前输出" aria-label="清空当前输出">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="output-grid" id="outputGrid"></div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-orb" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/></svg>
+        </div>
+        <h2>把想法写下来，开始生成</h2>
+        <p>选择模型与参数，输入提示词。一次可以并发提交多个任务，结果会出现在这里，并自动收进右侧历史。</p>
+        <span class="hint">支持 Grsai 文档中的全部图像与视频模型 · 自带 API Key</span>
+      </div>
+    </section>
+
+    <section class="composer" aria-label="生成控制">
+      <div class="prompt-wrap">
+        <label class="sr-only" for="prompt">提示词</label>
+        <textarea id="prompt" rows="3" placeholder="描述你想生成的画面，例如：清晨的薄雾森林，一位穿米白色针织衫的女孩站在溪边，电影感柔光，35mm 胶片质感……"></textarea>
+        <span class="char-count" id="charCount">0</span>
+      </div>
+
+      <div class="controls" id="controls">
+        <div class="field model-field">
+          <label for="modelSelect">模型</label>
+          <select id="modelSelect"></select>
+        </div>
+        <div class="field" id="ratioField">
+          <label for="ratioSelect">比例</label>
+          <select id="ratioSelect"></select>
+        </div>
+        <div class="field" id="sizeField">
+          <label for="sizeSelect">分辨率</label>
+          <select id="sizeSelect"></select>
+        </div>
+        <div class="field" id="qualityField">
+          <label for="qualitySelect">质量</label>
+          <select id="qualitySelect"></select>
+        </div>
+        <div class="field hidden" id="resolutionField">
+          <label for="resolutionSelect">清晰度</label>
+          <select id="resolutionSelect"></select>
+        </div>
+        <div class="field hidden" id="durationField">
+          <label for="durationInput">时长（秒）</label>
+          <input id="durationInput" type="number" min="1" max="15" step="1" value="4">
+        </div>
+      </div>
+
+      <details class="advanced" id="advanced" style="font-size:11.5px;color:var(--muted)">
+        <summary style="cursor:pointer;user-select:none;width:fit-content">高级选项（参考图 / 种子）</summary>
+        <div class="controls" style="margin-top:9px;grid-template-columns:2fr 1fr">
+          <div class="field">
+            <label for="refInput">参考图 URL（可选）</label>
+            <input id="refInput" type="url" placeholder="https://… 图片地址，用于图生图 / 首帧参考">
+          </div>
+          <div class="field">
+            <label for="seedInput">种子（可选）</label>
+            <input id="seedInput" type="number" min="1" max="999999" step="1" placeholder="随机">
+          </div>
+        </div>
+      </details>
+
+      <div class="batch-row">
+        <label class="batch-label" for="batchRange">并发提交 <b id="batchValue">3</b> 个</label>
+        <input class="batch-slider" id="batchRange" type="range" min="1" max="5" step="1" value="3">
+        <span class="batch-hint" id="batchHint">同时发起 3 个任务</span>
+      </div>
+
+      <div class="composer-foot">
+        <span class="shortcut"><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> 生成</span>
+        <div class="actions">
+          <button class="btn btn-danger" id="stopBtn" type="button" hidden>停止</button>
+          <button class="btn btn-soft" id="settingsBtn" type="button">API 设置</button>
+          <button class="btn btn-primary" id="generateBtn" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/></svg>
+            <span id="generateText">生成</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="history" aria-label="生成历史">
+    <div class="history-head">
+      <div class="history-title"><h2>历史</h2><span id="historyCount">0</span></div>
+      <div class="history-tools">
+        <button class="icon-btn" id="clearHistoryBtn" type="button" title="清空历史" aria-label="清空历史">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </aside>
+</div>
+
+<div class="modal" id="keyModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="keyModalTitle">
+    <div>
+      <h2 id="keyModalTitle">连接 Grsai API</h2>
+      <p style="margin-top:6px">使用你自己的 Grsai API Key。Key 只保存在本机浏览器，生成时直接发送到 Grsai，不经过任何中间服务器。</p>
+    </div>
+    <div class="modal-field">
+      <label for="keyInput">API Key</label>
+      <div class="key-row">
+        <input id="keyInput" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+        <button class="btn btn-soft" id="toggleKeyBtn" type="button" style="padding:8px 10px">显示</button>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label for="nodeSelect">接口节点</label>
+      <select id="nodeSelect">
+        <option value="cn">国内节点 · grsai.dakka.com.cn</option>
+        <option value="global">全球节点 · grsaiapi.com</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="clearKeyBtn" type="button">清除 Key</button>
+      <button class="btn" id="cancelKeyBtn" type="button">取消</button>
+      <button class="btn btn-primary" id="saveKeyBtn" type="button">保存并使用</button>
+    </div>
+    <div class="modal-note">
+      没有 Key？到 <a href="https://grsai.ai/zh/dashboard/api-keys" target="_blank" rel="noreferrer">Grsai 控制台</a> 创建。本站不收集、不上传你的 Key。
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lb-shell" role="dialog" aria-modal="true" aria-label="媒体预览">
+    <div class="lb-bar">
+      <div class="lb-title" id="lbTitle">预览</div>
+      <button class="icon-btn" id="lbClose" type="button" aria-label="关闭预览">✕</button>
+    </div>
+    <div class="lb-body" id="lbBody">
+      <button class="lb-nav prev" id="lbPrev" type="button" aria-label="上一张">‹</button>
+      <button class="lb-nav next" id="lbNext" type="button" aria-label="下一张">›</button>
+    </div>
+    <div class="lb-foot">
+      <span id="lbMeta"></span>
+      <a id="lbDownload" href="#" target="_blank" rel="noreferrer" download>下载原文件</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var API_NODES = {
+    cn: "https://grsai.dakka.com.cn",
+    global: "https://grsaiapi.com"
+  };
+
+  var IMG_RATIOS = ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"];
+  var NANO_RATIOS = ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16", "21:9"];
+  var VIDEO_RATIOS = ["16:9", "9:16", "1:1"];
+
+  var RATIO_LABELS = {
+    "1:1": "1:1 方形",
+    "3:2": "3:2 横构图",
+    "2:3": "2:3 竖构图",
+    "4:3": "4:3 经典",
+    "3:4": "3:4 竖版",
+    "16:9": "16:9 横屏",
+    "9:16": "9:16 竖屏",
+    "21:9": "21:9 宽银幕"
+  };
+
+  var QUALITY_LABELS = {
+    auto: "自动",
+    low: "标准",
+    medium: "均衡",
+    high: "高",
+    xhigh: "超高",
+    max: "极致"
+  };
+
+  var PIXELS = {
+    "1:1": { "1K": "1024x1024", "2K": "2048x2048", "4K": "2880x2880" },
+    "3:2": { "1K": "1536x1024", "2K": "2048x1360", "4K": "3456x2304" },
+    "2:3": { "1K": "1024x1536", "2K": "1360x2048", "4K": "2304x3456" },
+    "4:3": { "1K": "1280x960", "2K": "2048x1536", "4K": "3072x2304" },
+    "3:4": { "1K": "960x1280", "2K": "1536x2048", "4K": "2304x3072" },
+    "16:9": { "1K": "1280x720", "2K": "2048x1152", "4K": "3840x2160" },
+    "9:16": { "1K": "720x1280", "2K": "1152x2048", "4K": "2160x3840" }
+  };
+
+  var MODELS = [
+    { id: "gpt-image-2", label: "GPT Image 2", type: "image", family: "GPT Image", mode: "ratio", ratios: IMG_RATIOS, sizes: [], qualities: ["auto"], defaultRatio: "1:1", defaultQuality: "auto" },
+    { id: "gpt-image-2-vip", label: "GPT Image 2 VIP", type: "image", family: "GPT Image", mode: "pixel", ratios: IMG_RATIOS, sizes: ["1K", "2K", "4K"], qualities: ["medium"], defaultRatio: "16:9", defaultSize: "2K", defaultQuality: "medium" },
+    { id: "gpt-image-2.5", label: "GPT Image 2.5", type: "image", family: "GPT Image", mode: "ratio", ratios: IMG_RATIOS, sizes: [], qualities: ["auto"], defaultRatio: "1:1", defaultQuality: "auto" },
+    { id: "gpt-image-2.5-flare", label: "GPT Image 2.5 Flare", type: "image", family: "GPT Image", mode: "pixel", ratios: IMG_RATIOS, sizes: ["1K", "2K", "4K"], qualities: ["low", "medium", "high"], defaultRatio: "16:9", defaultSize: "2K", defaultQuality: "medium" },
+    { id: "gpt-image-2.5-sunburst", label: "GPT Image 2.5 Sunburst", type: "image", family: "GPT Image", mode: "pixel", ratios: IMG_RATIOS, sizes: ["1K", "2K", "4K"], qualities: ["low", "medium", "high", "xhigh", "max"], defaultRatio: "16:9", defaultSize: "2K", defaultQuality: "high" }
+  ];
+
+  var NANO_IDS = [
+    "nano-banana", "nano-banana-fast", "nano-banana-2", "nano-banana-2-cl",
+    "nano-banana-2-2k-cl", "nano-banana-2-4k-cl", "nano-banana-2.1",
+    "nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl",
+    "nano-banana-pro-vip", "nano-banana-pro-4k-vip"
+  ];
+
+  function nanoLabel(id) {
+    return id.split("-").map(function (part) {
+      if (part === "2k") return "2K";
+      if (part === "4k") return "4K";
+      if (part === "vip") return "VIP";
+      if (part === "cl") return "CL";
+      if (part === "vt") return "VT";
+      if (part === "pro") return "Pro";
+      if (part === "fast") return "Fast";
+      if (part === "banana") return "Banana";
+      if (part === "nano") return "Nano";
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    }).join(" ");
+  }
+
+  NANO_IDS.forEach(function (id) {
+    var defaultSize = id.indexOf("4k") >= 0 ? "4K" : (id.indexOf("2k") >= 0 ? "2K" : "1K");
+    MODELS.push({
+      id: id,
+      label: nanoLabel(id),
+      type: "image",
+      family: "Nano Banana",
+      mode: "nano",
+      ratios: NANO_RATIOS,
+      sizes: ["1K", "2K", "4K"],
+      qualities: [],
+      defaultRatio: "1:1",
+      defaultSize: defaultSize
+    });
+  });
+
+  MODELS.push(
+    { id: "agnes-video-2.5", label: "Agnes Video 2.5", type: "video", family: "视频", mode: "video", ratios: VIDEO_RATIOS, resolutions: ["480p", "720p", "1080p"], minDuration: 4, maxDuration: 12, defaultDuration: 4, defaultRatio: "16:9", defaultResolution: "720p" },
+    { id: "minimax-h3", label: "MiniMax H3", type: "video", family: "视频", mode: "video", ratios: VIDEO_RATIOS, resolutions: ["480p", "720p", "1080p"], minDuration: 1, maxDuration: 15, defaultDuration: 5, defaultRatio: "9:16", defaultResolution: "720p" }
+  );
+
+  var MODEL_MAP = {};
+  MODELS.forEach(function (m) { MODEL_MAP[m.id] = m; });
+
+  var state = {
+    mode: "image",
+    modelId: "gpt-image-2-vip",
+    ratio: "16:9",
+    size: "2K",
+    quality: "medium",
+    resolution: "720p",
+    duration: 4,
+    batch: 3,
+    key: "",
+    node: "cn",
+    jobs: [],
+    history: [],
+    busy: false,
+    controllers: [],
+    lightboxItems: [],
+    lightboxIndex: 0
+  };
+
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+  function esc(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function isHttp(url) {
+    if (typeof url !== "string") return false;
+    try {
+      var u = new URL(url);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch (e) { return false; }
+  }
+
+  function uid() {
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  function sleep(ms, signal) {
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(resolve, ms);
+      if (signal) {
+        signal.addEventListener("abort", function () {
+          clearTimeout(timer);
+          reject(new DOMException("Aborted", "AbortError"));
+        }, { once: true });
+      }
+    });
+  }
+
+  function toast(message, isError) {
+    var el = $("#toast");
+    el.textContent = message;
+    el.className = "toast show" + (isError ? " error" : "");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(function () { el.className = "toast"; }, 4200);
+  }
+
+  function getNodeUrl() { return API_NODES[state.node] || API_NODES.cn; }
+
+  function authHeaders() {
+    return {
+      "Authorization": "Bearer " + state.key,
+      "Content-Type": "application/json"
+    };
+  }
+
+  /* ---------- persistence ---------- */
+  function loadLocal() {
+    try {
+      state.key = localStorage.getItem("grsai_key") || "";
+      state.node = localStorage.getItem("grsai_node") || "cn";
+      state.batch = Number(localStorage.getItem("grsai_batch") || 3);
+      if (!(state.batch >= 1 && state.batch <= 5)) state.batch = 3;
+      var raw = localStorage.getItem("grsai_history_v1");
+      var parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) {
+        state.history = parsed.filter(function (item) {
+          return item && item.id && item.type && Array.isArray(item.urls) && item.urls.some(isHttp);
+        }).slice(0, 60);
+      }
+    } catch (e) {
+      state.key = "";
+      state.history = [];
+    }
+  }
+
+  function saveHistory() {
+    try { localStorage.setItem("grsai_history_v1", JSON.stringify(state.history.slice(0, 60))); } catch (e) {}
+  }
+
+  function saveKey() {
+    try {
+      if (state.key) localStorage.setItem("grsai_key", state.key);
+      else localStorage.removeItem("grsai_key");
+      localStorage.setItem("grsai_node", state.node);
+    } catch (e) {}
+  }
+
+  /* ---------- theme ---------- */
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("grsai_theme", theme); } catch (e) {}
+    var path = $("#themeIcon");
+    if (path) {
+      path.setAttribute("d", theme === "dark"
+        ? "M20.2 14.2A8.2 8.2 0 0 1 9.8 3.8 8.4 8.4 0 1 0 20.2 14.2z"
+        : "M12 3v2.2M12 18.8V21M4.22 4.22l1.56 1.56M18.22 18.22l1.56 1.56M3 12h2.2M18.8 12H21M4.22 19.78l1.56-1.56M18.22 5.78l1.56-1.56");
+    }
+  }
+
+  function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem("grsai_theme"); } catch (e) {}
+    var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    applyTheme(theme);
+  }
+
+  /* ---------- model / controls ---------- */
+  function currentModel() { return MODEL_MAP[state.modelId] || MODELS[0]; }
+
+  function renderModelSelect() {
+    var select = $("#modelSelect");
+    select.innerHTML = "";
+    var groups = {};
+    MODELS.filter(function (m) { return m.type === state.mode; }).forEach(function (m) {
+      if (!groups[m.family]) {
+        var og = document.createElement("optgroup");
+        og.label = m.family;
+        groups[m.family] = og;
+        select.appendChild(og);
+      }
+      var option = document.createElement("option");
+      option.value = m.id;
+      option.textContent = m.label;
+      groups[m.family].appendChild(option);
+    });
+    if (!MODEL_MAP[state.modelId] || MODEL_MAP[state.modelId].type !== state.mode) {
+      var first = MODELS.filter(function (m) { return m.type === state.mode; })[0];
+      state.modelId = first.id;
+      applyModelDefaults(first);
+    }
+    select.value = state.modelId;
+  }
+
+  function applyModelDefaults(model) {
+    if (model.ratios && model.ratios.indexOf(state.ratio) < 0) state.ratio = model.defaultRatio || model.ratios[0];
+    if (model.sizes && model.sizes.length) {
+      if (model.sizes.indexOf(state.size) < 0) state.size = model.defaultSize || model.sizes[0];
+    }
+    if (model.qualities && model.qualities.length) {
+      if (model.qualities.indexOf(state.quality) < 0) state.quality = model.defaultQuality || model.qualities[0];
+    }
+    if (model.resolutions) {
+      if (model.resolutions.indexOf(state.resolution) < 0) state.resolution = model.defaultResolution || model.resolutions[0];
+    }
+    if (model.type === "video") {
+      if (!state.duration || state.duration < model.minDuration || state.duration > model.maxDuration) {
+        state.duration = model.defaultDuration || model.minDuration;
+      }
+    }
+  }
+
+  function fillSelect(select, values, selected, labelFn) {
+    select.innerHTML = "";
+    values.forEach(function (value) {
+      var option = document.createElement("option");
+      option.value = value;
+      option.textContent = labelFn ? labelFn(value) : value;
+      select.appendChild(option);
+    });
+    select.value = selected;
+    select.disabled = values.length <= 1;
+  }
+
+  function renderControls() {
+    var model = currentModel();
+    $("#sideModel").textContent = model.label;
+    $("#sideModelType").textContent = model.type === "image" ? "图像" : "视频";
+    $("#stageTitle").textContent = model.type === "image" ? "图像输出" : "视频输出";
+
+    var ratioField = $("#ratioField");
+    var sizeField = $("#sizeField");
+    var qualityField = $("#qualityField");
+    var resolutionField = $("#resolutionField");
+    var durationField = $("#durationField");
+
+    ratioField.classList.remove("hidden");
+    fillSelect($("#ratioSelect"), model.ratios || VIDEO_RATIOS, state.ratio, function (r) { return RATIO_LABELS[r] || r; });
+
+    var showSize = model.type === "image" && model.sizes && model.sizes.length > 0;
+    sizeField.classList.toggle("hidden", !showSize);
+    if (showSize) fillSelect($("#sizeSelect"), model.sizes, state.size, function (s) { return s; });
+
+    var showQuality = model.type === "image" && model.qualities && model.qualities.length > 0;
+    qualityField.classList.toggle("hidden", !showQuality);
+    if (showQuality) {
+      fillSelect($("#qualitySelect"), model.qualities, state.quality, function (q) { return QUALITY_LABELS[q] || q; });
+      $("#qualitySelect").disabled = model.qualities.length <= 1;
+    }
+
+    var isVideo = model.type === "video";
+    resolutionField.classList.toggle("hidden", !isVideo);
+    durationField.classList.toggle("hidden", !isVideo);
+    if (isVideo) {
+      fillSelect($("#resolutionSelect"), model.resolutions || ["720p"], state.resolution, function (r) { return r; });
+      var input = $("#durationInput");
+      input.min = String(model.minDuration || 1);
+      input.max = String(model.maxDuration || 15);
+      input.value = String(state.duration);
+      $("#durationField label").textContent = "时长（" + (model.minDuration || 1) + "–" + (model.maxDuration || 15) + " 秒）";
+      syncDurationLimits();
+    }
+
+    $("#advanced").open = false;
+  }
+
+  function syncDurationLimits() {
+    var model = currentModel();
+    if (model.type !== "video") return;
+    var max = model.maxDuration || 15;
+    if (model.id === "minimax-h3" && state.resolution === "1080p") max = Math.min(max, 10);
+    var input = $("#durationInput");
+    input.max = String(max);
+    if (Number(input.value) > max) input.value = String(max);
+    $("#durationField label").textContent = "时长（" + (model.minDuration || 1) + "–" + max + " 秒）";
+  }
+
+  function syncStateFromControls() {
+    state.ratio = $("#ratioSelect").value;
+    if (!$("#sizeField").classList.contains("hidden")) state.size = $("#sizeSelect").value;
+    if (!$("#qualityField").classList.contains("hidden")) state.quality = $("#qualitySelect").value;
+    if (!$("#resolutionField").classList.contains("hidden")) state.resolution = $("#resolutionSelect").value;
+    if (!$("#durationField").classList.contains("hidden")) state.duration = Number($("#durationInput").value) || currentModel().defaultDuration || 4;
+  }
+
+  function setMode(mode) {
+    if (state.busy) { toast("当前还有任务在生成，先停止再切换模式", true); return; }
+    state.mode = mode;
+    $$(".mode-btn").forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-mode") === mode);
+    });
+    if (mode === "video") {
+      state.modelId = "agnes-video-2.5";
+    } else {
+      state.modelId = "gpt-image-2-vip";
+    }
+    applyModelDefaults(currentModel());
+    state.jobs = [];
+    renderModelSelect();
+    renderControls();
+    renderJobs();
+    renderHistory();
+    updateStatus();
+  }
+
+  /* ---------- payload ---------- */
+  function buildPayload(prompt) {
+    var model = currentModel();
+    var ref = $("#refInput").value.trim();
+    var seedValue = $("#seedInput").value.trim();
+    var payload = {
+      model: model.id,
+      prompt: prompt,
+      images: ref && isHttp(ref) ? [ref] : [],
+      replyType: model.type === "video" ? "async" : "json"
+    };
+
+    if (model.type === "image") {
+      if (model.mode === "pixel") {
+        payload.aspectRatio = (PIXELS[state.ratio] && PIXELS[state.ratio][state.size]) || PIXELS["1:1"][state.size] || "1024x1024";
+        if (model.qualities && model.qualities.length) payload.quality = state.quality;
+      } else if (model.mode === "nano") {
+        payload.aspectRatio = state.ratio;
+        payload.imageSize = state.size;
+      } else {
+        payload.aspectRatio = state.ratio;
+        if (model.qualities && model.qualities.length) payload.quality = state.quality;
+      }
+    } else {
+      payload.aspectRatio = model.id === "minimax-h3"
+        ? (state.ratio === "16:9" ? "landscape" : state.ratio === "9:16" ? "portrait" : "square")
+        : state.ratio;
+      payload.resolution = state.resolution;
+      var duration = Math.max(model.minDuration || 1, Math.min(model.maxDuration || 15, Number(state.duration) || model.defaultDuration || 4));
+      if (model.id === "minimax-h3" && state.resolution === "1080p") duration = Math.min(duration, 10);
+      payload.duration = duration;
+      payload.seed = seedValue ? Number(seedValue) : (Math.floor(Math.random() * 999998) + 1);
+      payload.audios = [];
+      if (model.id === "minimax-h3") payload.promptSkill = true;
+    }
+    return payload;
+  }
+
+  function paramsSummary(model) {
+    var parts = [];
+    parts.push(RATIO_LABELS[state.ratio] || state.ratio);
+    if (model.type === "image") {
+      if (model.mode === "pixel") parts.push((PIXELS[state.ratio] && PIXELS[state.ratio][state.size]) || state.size);
+      else if (model.mode === "nano") parts.push(state.size);
+      if (model.qualities && model.qualities.length) parts.push(QUALITY_LABELS[state.quality] || state.quality);
+    } else {
+      parts.push(state.resolution, state.duration + "s");
+    }
+    return parts.join(" · ");
+  }
+
+  /* ---------- API ---------- */
+  function extractError(data, fallback) {
+    if (!data) return fallback || "未知错误";
+    if (typeof data === "string") return data.slice(0, 300);
+    if (data.error && typeof data.error === "string") return data.error;
+    if (data.error && data.error.message) return String(data.error.message);
+    if (data.message) return String(data.message);
+    if (data.msg) return String(data.msg);
+    if (data.detail) return String(data.detail);
+    try { return JSON.stringify(data).slice(0, 300); } catch (e) { return fallback || "未知错误"; }
+  }
+
+  function statusOf(data) {
+    if (!data) return "";
+    return String(data.status || data.state || data.phase || "").toLowerCase();
+  }
+
+  function isDone(data) {
+    var s = statusOf(data);
+    return ["succeeded", "success", "completed", "done", "finished"].indexOf(s) >= 0 || extractUrls(data).length > 0;
+  }
+
+  function isFailed(data) {
+    var s = statusOf(data);
+    return ["failed", "error", "cancelled", "canceled", "rejected"].indexOf(s) >= 0;
+  }
+
+  function extractUrls(data) {
+    if (!data) return [];
+    var out = [];
+    var keys = ["results", "data", "images", "output", "videos", "result"];
+    keys.forEach(function (key) {
+      var value = data[key];
+      if (Array.isArray(value)) {
+        value.forEach(function (item) {
+          if (typeof item === "string") out.push(item);
+          else if (item && typeof item === "object") {
+            out.push(item.url || item.image_url || item.video_url || item.file_url || item.src || "");
+          }
+        });
+      } else if (value && typeof value === "object") {
+        out.push(value.url || value.image_url || value.video_url || value.file_url || "");
+      }
+    });
+    if (typeof data.url === "string") out.push(data.url);
+    return out.filter(isHttp).filter(function (url, index, arr) { return arr.indexOf(url) === index; });
+  }
+
+  async function apiGenerate(payload, signal) {
+    var response = await fetch(getNodeUrl() + "/v1/api/generate", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+      signal: signal
+    });
+    var text = await response.text();
+    var data;
+    try { data = text ? JSON.parse(text) : {}; }
+    catch (e) { throw new Error("接口返回非 JSON（HTTP " + response.status + "）：" + text.slice(0, 220)); }
+    if (!response.ok) throw new Error(extractError(data, "HTTP " + response.status));
+    return data;
+  }
+
+  async function pollResult(id, signal, onProgress) {
+    var started = Date.now();
+    var timeout = 15 * 60 * 1000;
+    while (Date.now() - started < timeout) {
+      await sleep(2600, signal);
+      var response = await fetch(getNodeUrl() + "/v1/api/result?id=" + encodeURIComponent(id), {
+        headers: { "Authorization": "Bearer " + state.key },
+        signal: signal
+      });
+      var text = await response.text();
+      var data;
+      try { data = text ? JSON.parse(text) : {}; }
+      catch (e) { throw new Error("查询结果返回非 JSON：" + text.slice(0, 180)); }
+      if (!response.ok) throw new Error(extractError(data, "HTTP " + response.status));
+      if (typeof onProgress === "function") onProgress(data);
+      if (isDone(data)) return data;
+      if (isFailed(data)) throw new Error(extractError(data, "生成失败"));
+    }
+    throw new Error("生成超时（15 分钟），请稍后到历史中查看或重试");
+  }
+
+  /* ---------- job execution ---------- */
+  async function runJob(job) {
+    job.status = "running";
+    job.startedAt = Date.now();
+    renderJobs();
+    updateStatus();
+    try {
+      var data = await apiGenerate(job.payload, job.controller.signal);
+      if (!isDone(data) && data.id) {
+        job.remoteId = data.id;
+        job.progress = statusOf(data) || "queued";
+        renderJobs();
+        data = await pollResult(data.id, job.controller.signal, function (tick) {
+          job.progress = statusOf(tick) || "processing";
+          renderJobs();
+        });
+      }
+      var urls = extractUrls(data);
+      if (!urls.length) throw new Error(extractError(data, "接口没有返回媒体 URL"));
+      job.urls = urls;
+      job.status = "done";
+      job.finishedAt = Date.now();
+      addHistory(job);
+    } catch (error) {
+      if (error && (error.name === "AbortError" || String(error).indexOf("Aborted") >= 0)) {
+        job.status = "cancelled";
+      } else {
+        job.status = "error";
+        job.error = error && error.message ? error.message : String(error);
+      }
+    }
+    renderJobs();
+    renderHistory();
+    updateStatus();
+  }
+
+  function addHistory(job) {
+    var model = MODEL_MAP[job.model] || { label: job.model, type: job.type };
+    state.history.unshift({
+      id: job.id,
+      type: job.type,
+      model: model.label,
+      prompt: job.prompt,
+      urls: job.urls.slice(),
+      createdAt: Date.now(),
+      params: job.paramsSummary
+    });
+    state.history = state.history.slice(0, 60);
+    saveHistory();
+  }
+
+  function generate() {
+    if (state.busy) return;
+    if (!state.key) { openKeyModal(); toast("先配置 Grsai API Key", true); return; }
+    var prompt = $("#prompt").value.trim();
+    if (!prompt) { $("#prompt").focus(); toast("先写一段提示词", true); return; }
+
+    syncStateFromControls();
+    var model = currentModel();
+    var count = Math.max(1, Math.min(5, Number($("#batchRange").value) || 1));
+    state.batch = count;
+    try { localStorage.setItem("grsai_batch", String(count)); } catch (e) {}
+
+    state.busy = true;
+    state.controllers = [];
+    updateComposerState();
+    updateStatus();
+
+    var jobs = [];
+    for (var i = 0; i < count; i++) {
+      var controller = new AbortController();
+      state.controllers.push(controller);
+      var job = {
+        id: uid(),
+        type: model.type,
+        model: model.id,
+        modelLabel: model.label,
+        prompt: prompt,
+        paramsSummary: paramsSummary(model),
+        payload: buildPayload(prompt),
+        urls: [],
+        status: "queued",
+        error: "",
+        progress: "",
+        createdAt: Date.now(),
+        controller: controller
+      };
+      jobs.push(job);
+      state.jobs.unshift(job);
+    }
+    state.jobs = state.jobs.slice(0, 24);
+    renderJobs();
+    renderHistory();
+    updateStatus();
+
+    Promise.allSettled(jobs.map(function (job) { return runJob(job); })).then(function () {
+      state.busy = false;
+      state.controllers = [];
+      updateComposerState();
+      updateStatus();
+      renderJobs();
+    });
+  }
+
+  function stopAll() {
+    state.controllers.forEach(function (controller) {
+      try { controller.abort(); } catch (e) {}
+    });
+    state.controllers = [];
+    state.busy = false;
+    updateComposerState();
+    updateStatus();
+    renderJobs();
+    toast("已停止当前任务");
+  }
+
+  /* ---------- rendering ---------- */
+  function formatTime(ts) {
+    var d = new Date(ts);
+    var now = new Date();
+    var sameDay = d.toDateString() === now.toDateString();
+    if (sameDay) return d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+    return (d.getMonth() + 1) + "/" + d.getDate() + " " + d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function renderJobs() {
+    var grid = $("#outputGrid");
+    var empty = $("#emptyState");
+    grid.innerHTML = "";
+    if (!state.jobs.length) {
+      empty.style.display = "flex";
+      return;
+    }
+    empty.style.display = "none";
+    state.jobs.forEach(function (job) {
+      grid.appendChild(buildJobCard(job));
+    });
+  }
+
+  function buildJobCard(job) {
+    var card = document.createElement("article");
+    card.className = "result-card";
+    card.setAttribute("data-job", job.id);
+
+    var media = document.createElement("div");
+    media.className = "result-media" + (job.type === "video" ? " is-video" : "");
+
+    if (job.status === "done" && job.urls.length) {
+      var first = job.urls[0];
+      if (job.type === "video") {
+        var video = document.createElement("video");
+        video.src = first;
+        video.controls = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+        media.appendChild(video);
+      } else {
+        var img = document.createElement("img");
+        img.src = first;
+        img.alt = job.prompt.slice(0, 120);
+        img.loading = "lazy";
+        media.appendChild(img);
+        var hint = document.createElement("span");
+        hint.className = "open-hint";
+        hint.textContent = "点击放大";
+        media.appendChild(hint);
+      }
+      media.addEventListener("click", function (event) {
+        if (event.target.tagName === "VIDEO" || event.target.tagName === "A") return;
+        openLightbox(job.urls, job);
+      });
+    } else if (job.status === "error" || job.status === "cancelled") {
+      var inner = document.createElement("div");
+      inner.className = "skeleton-inner";
+      inner.style.padding = "16px";
+      if (job.status === "cancelled") {
+        inner.innerHTML = "<div style='font-size:12px;color:var(--muted)'>已停止</div>";
+      } else {
+        var err = document.createElement("div");
+        err.className = "result-error";
+        err.textContent = job.error || "生成失败";
+        inner.appendChild(err);
+        var retry = document.createElement("button");
+        retry.className = "retry";
+        retry.type = "button";
+        retry.textContent = "重试这一个";
+        retry.addEventListener("click", function () { retryJob(job); });
+        inner.appendChild(retry);
+      }
+      media.appendChild(inner);
+    } else {
+      media.classList.add("skeleton");
+      var skeleton = document.createElement("div");
+      skeleton.className = "skeleton-inner";
+      var spinner = document.createElement("div");
+      spinner.className = "spinner";
+      var label = document.createElement("div");
+      label.style.fontSize = "11px";
+      label.textContent = job.status === "running" ? (job.progress ? "生成中 · " + job.progress : "生成中…") : "排队中…";
+      skeleton.appendChild(spinner);
+      skeleton.appendChild(label);
+      media.appendChild(skeleton);
+    }
+
+    card.appendChild(media);
+
+    var body = document.createElement("div");
+    body.className = "result-body";
+
+    var top = document.createElement("div");
+    top.className = "result-top";
+    var model = document.createElement("span");
+    model.className = "result-model";
+    model.textContent = job.modelLabel || job.model;
+    var time = document.createElement("span");
+    time.className = "result-time";
+    time.textContent = formatTime(job.createdAt);
+    top.appendChild(model);
+    top.appendChild(time);
+    body.appendChild(top);
+
+    if (job.paramsSummary) {
+      var params = document.createElement("div");
+      params.className = "result-params";
+      params.textContent = job.paramsSummary;
+      body.appendChild(params);
+    }
+
+    var prompt = document.createElement("p");
+    prompt.className = "result-prompt";
+    prompt.textContent = job.prompt;
+    body.appendChild(prompt);
+
+    if (job.status === "done" && job.urls.length) {
+      var actions = document.createElement("div");
+      actions.className = "result-actions";
+      var open = document.createElement("button");
+      open.className = "mini-link";
+      open.type = "button";
+      open.textContent = job.urls.length > 1 ? "查看全部 " + job.urls.length : "查看";
+      open.addEventListener("click", function () { openLightbox(job.urls, job); });
+      actions.appendChild(open);
+      var download = document.createElement("a");
+      download.className = "mini-link";
+      download.href = job.urls[0];
+      download.target = "_blank";
+      download.rel = "noreferrer";
+      download.download = "";
+      download.textContent = "下载";
+      actions.appendChild(download);
+      body.appendChild(actions);
+    }
+
+    card.appendChild(body);
+    return card;
+  }
+
+  function retryJob(job) {
+    if (state.busy) { toast("当前还有任务在跑，先停止", true); return; }
+    var clone = Object.assign({}, job, {
+      id: uid(),
+      status: "queued",
+      error: "",
+      urls: [],
+      createdAt: Date.now(),
+      controller: new AbortController()
+    });
+    state.jobs.unshift(clone);
+    state.jobs = state.jobs.slice(0, 24);
+    state.controllers = [clone.controller];
+    state.busy = true;
+    updateComposerState();
+    updateStatus();
+    renderJobs();
+    runJob(clone).then(function () {
+      state.busy = false;
+      state.controllers = [];
+      updateComposerState();
+      updateStatus();
+    });
+  }
+
+  function renderHistory() {
+    var list = $("#historyList");
+    list.innerHTML = "";
+    var items = state.history.filter(function (item) { return item.type === state.mode; });
+    $("#historyCount").textContent = String(items.length);
+    if (!items.length) {
+      var empty = document.createElement("div");
+      empty.className = "history-empty";
+      empty.textContent = state.mode === "image" ? "还没有图片历史。生成成功后会出现在这里。" : "还没有视频历史。生成成功后会出现在这里。";
+      list.appendChild(empty);
+      return;
+    }
+    items.forEach(function (item) {
+      var row = document.createElement("div");
+      row.className = "history-item";
+      row.tabIndex = 0;
+      row.setAttribute("role", "button");
+      row.setAttribute("aria-label", "查看历史：" + item.prompt.slice(0, 40));
+
+      var thumb = document.createElement("div");
+      thumb.className = "history-thumb";
+      if (item.type === "image" && item.urls[0]) {
+        var img = document.createElement("img");
+        img.src = item.urls[0];
+        img.alt = "";
+        img.loading = "lazy";
+        thumb.appendChild(img);
+      } else {
+        var mark = document.createElement("div");
+        mark.className = "video-mark";
+        mark.innerHTML = "<svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='5' width='13' height='14' rx='2.5'/><path d='M16 10l4-2.2v8.4L16 14'/></svg>";
+        thumb.appendChild(mark);
+      }
+
+      var info = document.createElement("div");
+      info.className = "history-info";
+      var strong = document.createElement("strong");
+      strong.textContent = item.model;
+      var time = document.createElement("time");
+      time.textContent = formatTime(item.createdAt);
+      var p = document.createElement("p");
+      p.textContent = item.prompt;
+      info.appendChild(strong);
+      info.appendChild(time);
+      info.appendChild(p);
+
+      var del = document.createElement("button");
+      del.className = "history-del";
+      del.type = "button";
+      del.title = "删除这条历史";
+      del.setAttribute("aria-label", "删除这条历史");
+      del.textContent = "✕";
+      del.addEventListener("click", function (event) {
+        event.stopPropagation();
+        state.history = state.history.filter(function (h) { return h.id !== item.id; });
+        saveHistory();
+        renderHistory();
+      });
+
+      row.appendChild(thumb);
+      row.appendChild(info);
+      row.appendChild(del);
+      row.addEventListener("click", function () { openLightbox(item.urls, item); });
+      row.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openLightbox(item.urls, item);
+        }
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function updateStatus() {
+    var pill = $("#statusPill");
+    var text = $("#statusText");
+    var sub = $("#stageSub");
+    var busy = state.busy;
+    pill.classList.toggle("busy", busy);
+    if (busy) {
+      var running = state.jobs.filter(function (j) { return j.status === "running" || j.status === "queued"; }).length;
+      text.textContent = "生成中" + (running ? " · " + running : "");
+      sub.textContent = "正在调用 Grsai";
+    } else {
+      var done = state.jobs.filter(function (j) { return j.status === "done"; }).length;
+      text.textContent = done ? "就绪" : "就绪";
+      sub.textContent = done ? "已完成 " + done + " 个任务" : "等待创作";
+    }
+  }
+
+  function updateComposerState() {
+    var btn = $("#generateBtn");
+    var stop = $("#stopBtn");
+    btn.disabled = state.busy;
+    $("#generateText").textContent = state.busy ? "生成中…" : "生成";
+    stop.hidden = !state.busy;
+  }
+
+  function renderKeyState() {
+    var configured = !!state.key;
+    var chip = $("#keyChip");
+    var chipText = $("#keyChipText");
+    var stateText = $("#keyState");
+    chip.classList.toggle("ok", configured);
+    chip.classList.toggle("warn", !configured);
+    chipText.textContent = configured ? "Key 已配置" : "未配置 Key";
+    stateText.textContent = configured ? "已配置" : "未配置";
+  }
+
+  /* ---------- lightbox ---------- */
+  function openLightbox(urls, item) {
+    var valid = (urls || []).filter(isHttp);
+    if (!valid.length) return;
+    state.lightboxItems = valid;
+    state.lightboxIndex = 0;
+    $("#lbTitle").textContent = item && item.model ? item.model : "预览";
+    $("#lightbox").hidden = false;
+    document.body.style.overflow = "hidden";
+    renderLightbox();
+  }
+
+  function renderLightbox() {
+    var body = $("#lbBody");
+    $$(".lb-nav", body).forEach(function (el) { el.remove(); });
+    $$("img, video", body).forEach(function (el) { el.remove(); });
+    var url = state.lightboxItems[state.lightboxIndex];
+    var isVideo = /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(url) || (state.mode === "video" && state.lightboxItems.length === 1);
+    if (isVideo) {
+      var video = document.createElement("video");
+      video.src = url;
+      video.controls = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      body.appendChild(video);
+    } else {
+      var img = document.createElement("img");
+      img.src = url;
+      img.alt = "生成结果";
+      body.appendChild(img);
+    }
+    $("#lbMeta").textContent = (state.lightboxIndex + 1) + " / " + state.lightboxItems.length;
+    $("#lbDownload").href = url;
+    var prev = document.createElement("button");
+    prev.className = "lb-nav prev";
+    prev.type = "button";
+    prev.setAttribute("aria-label", "上一张");
+    prev.textContent = "‹";
+    prev.hidden = state.lightboxItems.length <= 1;
+    prev.addEventListener("click", function (e) { e.stopPropagation(); navigateLightbox(-1); });
+    var next = document.createElement("button");
+    next.className = "lb-nav next";
+    next.type = "button";
+    next.setAttribute("aria-label", "下一张");
+    next.textContent = "›";
+    next.hidden = state.lightboxItems.length <= 1;
+    next.addEventListener("click", function (e) { e.stopPropagation(); navigateLightbox(1); });
+    body.appendChild(prev);
+    body.appendChild(next);
+  }
+
+  function navigateLightbox(delta) {
+    var len = state.lightboxItems.length;
+    if (len <= 1) return;
+    state.lightboxIndex = (state.lightboxIndex + delta + len) % len;
+    renderLightbox();
+  }
+
+  function closeLightbox() {
+    $("#lightbox").hidden = true;
+    document.body.style.overflow = "";
+    var body = $("#lbBody");
+    $$("video", body).forEach(function (v) { try { v.pause(); } catch (e) {} });
+  }
+
+  /* ---------- key modal ---------- */
+  function openKeyModal() {
+    $("#keyInput").type = "password";
+    $("#toggleKeyBtn").textContent = "显示";
+    $("#keyInput").value = state.key;
+    $("#nodeSelect").value = state.node;
+    $("#keyModal").hidden = false;
+    document.body.style.overflow = "hidden";
+    setTimeout(function () { $("#keyInput").focus(); }, 30);
+  }
+
+  function closeKeyModal() {
+    $("#keyModal").hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  function saveKeyFromModal() {
+    var value = $("#keyInput").value.trim();
+    if (!value) { toast("请输入 API Key", true); return; }
+    state.key = value;
+    state.node = $("#nodeSelect").value;
+    saveKey();
+    renderKeyState();
+    closeKeyModal();
+    toast("API Key 已保存到本机");
+  }
+
+  function clearKey() {
+    state.key = "";
+    saveKey();
+    renderKeyState();
+    $("#keyInput").value = "";
+    toast("已清除 API Key");
+  }
+
+  /* ---------- events ---------- */
+  function bindEvents() {
+    $$(".mode-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () { setMode(btn.getAttribute("data-mode")); });
+    });
+
+    $("#modelSelect").addEventListener("change", function (event) {
+      state.modelId = event.target.value;
+      applyModelDefaults(currentModel());
+      renderControls();
+    });
+
+    $("#ratioSelect").addEventListener("change", function (event) { state.ratio = event.target.value; });
+    $("#sizeSelect").addEventListener("change", function (event) { state.size = event.target.value; });
+    $("#qualitySelect").addEventListener("change", function (event) { state.quality = event.target.value; });
+    $("#resolutionSelect").addEventListener("change", function (event) {
+      state.resolution = event.target.value;
+      syncDurationLimits();
+    });
+    $("#durationInput").addEventListener("change", function (event) { state.duration = Number(event.target.value) || 4; });
+
+    $("#prompt").addEventListener("input", function () {
+      $("#charCount").textContent = String($("#prompt").value.length);
+    });
+
+    $("#batchRange").addEventListener("input", function (event) {
+      var value = Number(event.target.value) || 1;
+      $("#batchValue").textContent = String(value);
+      $("#batchHint").textContent = "同时发起 " + value + " 个任务";
+    });
+
+    $("#generateBtn").addEventListener("click", generate);
+    $("#stopBtn").addEventListener("click", stopAll);
+    $("#settingsBtn").addEventListener("click", openKeyModal);
+    $("#keyChip").addEventListener("click", openKeyModal);
+    $("#keyBtn").addEventListener("click", openKeyModal);
+
+    $("#saveKeyBtn").addEventListener("click", saveKeyFromModal);
+    $("#clearKeyBtn").addEventListener("click", clearKey);
+    $("#cancelKeyBtn").addEventListener("click", closeKeyModal);
+    $("#keyModal").addEventListener("click", function (event) { if (event.target === $("#keyModal")) closeKeyModal(); });
+    $("#toggleKeyBtn").addEventListener("click", function () {
+      var input = $("#keyInput");
+      input.type = input.type === "password" ? "text" : "password";
+      $("#toggleKeyBtn").textContent = input.type === "password" ? "显示" : "隐藏";
+    });
+
+    $("#themeBtn").addEventListener("click", function () {
+      var current = document.documentElement.getAttribute("data-theme") || "light";
+      applyTheme(current === "dark" ? "light" : "dark");
+    });
+
+    $("#clearOutputBtn").addEventListener("click", function () {
+      if (state.busy) { toast("先停止当前任务", true); return; }
+      state.jobs = [];
+      renderJobs();
+      updateStatus();
+    });
+
+    $("#clearHistoryBtn").addEventListener("click", function () {
+      var items = state.history.filter(function (h) { return h.type === state.mode; });
+      if (!items.length) return;
+      if (!window.confirm("清空当前模式下的全部历史？")) return;
+      state.history = state.history.filter(function (h) { return h.type !== state.mode; });
+      saveHistory();
+      renderHistory();
+      toast("当前模式的历史已清空");
+    });
+
+    $("#lbClose").addEventListener("click", closeLightbox);
+    $("#lightbox").addEventListener("click", function (event) {
+      if (event.target === $("#lightbox") || event.target.id === "lbBody") closeLightbox();
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        if (!$("#lightbox").hidden) closeLightbox();
+        else if (!$("#keyModal").hidden) closeKeyModal();
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        event.preventDefault();
+        if (!$("#keyModal").hidden) { saveKeyFromModal(); return; }
+        generate();
+      }
+    });
+  }
+
+  function init() {
+    initTheme();
+    loadLocal();
+    renderKeyState();
+    $("#batchRange").value = String(state.batch);
+    $("#batchValue").textContent = String(state.batch);
+    $("#batchHint").textContent = "同时发起 " + state.batch + " 个任务";
+    applyModelDefaults(currentModel());
+    renderModelSelect();
+    renderControls();
+    renderJobs();
+    renderHistory();
+    updateComposerState();
+    updateStatus();
+    bindEvents();
+    if (!state.key) {
+      setTimeout(function () { if (!state.key) openKeyModal(); }, 450);
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

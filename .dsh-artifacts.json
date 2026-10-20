@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "artifacts": {
+    "grsai-studio-k4bjg5": {
+      "id": "grsai-studio-k4bjg5",
+      "title": "Grsai Studio · 图像与视频生成",
+      "kind": "html",
+      "createdAt": "2026-10-20T01:25:54.543Z",
+      "updatedAt": "2026-10-20T01:25:54.543Z",
+      "rev": 1,
+      "files": [
+        "index.html"
+      ],
+      "description": "Grsai 图像与视频生成工作台：全部模型、BYOK、并发提交、历史记录、明暗主题。"
+    }
+  },
+  "tombstones": []
+}

@@ -1351,6 +1351,18 @@
     return String(data.status || data.state || data.phase || "").toLowerCase();
   }
 
+  function progressLabel(status) {
+    var labels = {
+      queued: "排队中",
+      pending: "等待中",
+      submitted: "已提交",
+      running: "正在生成",
+      processing: "正在处理",
+      generating: "正在生成"
+    };
+    return labels[status] || status || "正在生成";
+  }
+
   function isDone(data) {
     var s = statusOf(data);
     return ["succeeded", "success", "completed", "done", "finished"].indexOf(s) >= 0 || extractUrls(data).length > 0;
@@ -1436,10 +1448,10 @@
       var data = await apiGenerate(job.payload, job.endpoint, job.controller.signal);
       if (!isDone(data) && data.id) {
         job.remoteId = data.id;
-        job.progress = statusOf(data) || "queued";
+        job.progress = progressLabel(statusOf(data) || "queued");
         renderJobs();
         data = await pollResult(data.id, job.controller.signal, function (tick) {
-          job.progress = statusOf(tick) || "processing";
+          job.progress = progressLabel(statusOf(tick) || "processing");
           renderJobs();
         });
       }
@@ -1625,7 +1637,7 @@
       spinner.className = "spinner";
       var label = document.createElement("div");
       label.style.fontSize = "11px";
-      label.textContent = job.status === "running" ? (job.progress ? "生成中 · " + job.progress : "生成中…") : "排队中…";
+      label.textContent = job.status === "running" ? (job.progress || "正在生成…") : "排队中…";
       skeleton.appendChild(spinner);
       skeleton.appendChild(label);
       media.appendChild(skeleton);

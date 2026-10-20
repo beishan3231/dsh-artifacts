@@ -1271,28 +1271,40 @@
   }
 
   /* ---------- payload ---------- */
+  function endpointFor(model) {
+    return model.type === "image" && model.family === "GPT Image"
+      ? "/v1/images/generations"
+      : "/v1/api/generate";
+  }
+
   function buildPayload(prompt) {
     var model = currentModel();
     var ref = $("#refInput").value.trim();
     var seedValue = $("#seedInput").value.trim();
-    var payload = {
+    var refUrl = ref && isHttp(ref) ? ref : "";
+    var payload;
+
+    if (model.type === "image" && model.family === "GPT Image") {
+      // GPT Image models use the OpenAI-compatible generations endpoint.
+      var size = model.mode === "pixel"
+        ? ((PIXELS[state.ratio] && PIXELS[state.ratio][state.size]) || "1024x1024")
+        : ((PIXELS[state.ratio] && PIXELS[state.ratio]["1K"]) || "1024x1024");
+      payload = { model: model.id, prompt: prompt, size: size };
+      if (refUrl) payload.image = [refUrl];
+      if (model.qualities && model.qualities.length) payload.quality = state.quality;
+      return payload;
+    }
+
+    payload = {
       model: model.id,
       prompt: prompt,
-      images: ref && isHttp(ref) ? [ref] : [],
+      images: refUrl ? [refUrl] : [],
       replyType: model.type === "video" ? "async" : "json"
     };
 
     if (model.type === "image") {
-      if (model.mode === "pixel") {
-        payload.aspectRatio = (PIXELS[state.ratio] && PIXELS[state.ratio][state.size]) || PIXELS["1:1"][state.size] || "1024x1024";
-        if (model.qualities && model.qualities.length) payload.quality = state.quality;
-      } else if (model.mode === "nano") {
-        payload.aspectRatio = state.ratio;
-        payload.imageSize = state.size;
-      } else {
-        payload.aspectRatio = state.ratio;
-        if (model.qualities && model.qualities.length) payload.quality = state.quality;
-      }
+      payload.aspectRatio = state.ratio;
+      payload.imageSize = state.size;
     } else {
       payload.aspectRatio = model.id === "minimax-h3"
         ? (state.ratio === "16:9" ? "landscape" : state.ratio === "9:16" ? "portrait" : "square")
@@ -1369,8 +1381,8 @@
     return out.filter(isHttp).filter(function (url, index, arr) { return arr.indexOf(url) === index; });
   }
 
-  async function apiGenerate(payload, signal) {
-    var response = await fetch(getNodeUrl() + "/v1/api/generate", {
+  async function apiGenerate(payload, endpoint, signal) {
+    var response = await fetch(getNodeUrl() + (endpoint || "/v1/api/generate"), {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify(payload),
@@ -1412,7 +1424,7 @@
     renderJobs();
     updateStatus();
     try {
-      var data = await apiGenerate(job.payload, job.controller.signal);
+      var data = await apiGenerate(job.payload, job.endpoint, job.controller.signal);
       if (!isDone(data) && data.id) {
         job.remoteId = data.id;
         job.progress = statusOf(data) || "queued";
@@ -1485,6 +1497,7 @@
         prompt: prompt,
         paramsSummary: paramsSummary(model),
         payload: buildPayload(prompt),
+        endpoint: endpointFor(model),
         urls: [],
         status: "queued",
         error: "",

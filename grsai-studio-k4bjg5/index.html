@@ -451,6 +451,7 @@
   .btn:hover { border-color: var(--line-strong); background: var(--surface-2); }
   .btn:active { transform: translateY(1px); }
   .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .btn[hidden] { display: none; }
   .btn-primary {
     background: var(--accent);
     border-color: var(--accent);
@@ -1399,20 +1400,28 @@
   async function pollResult(id, signal, onProgress) {
     var started = Date.now();
     var timeout = 15 * 60 * 1000;
+    var transient = 0;
     while (Date.now() - started < timeout) {
       await sleep(2600, signal);
-      var response = await fetch(getNodeUrl() + "/v1/api/result?id=" + encodeURIComponent(id), {
-        headers: { "Authorization": "Bearer " + state.key },
-        signal: signal
-      });
-      var text = await response.text();
-      var data;
-      try { data = text ? JSON.parse(text) : {}; }
-      catch (e) { throw new Error("查询结果返回非 JSON：" + text.slice(0, 180)); }
-      if (!response.ok) throw new Error(extractError(data, "HTTP " + response.status));
-      if (typeof onProgress === "function") onProgress(data);
-      if (isDone(data)) return data;
-      if (isFailed(data)) throw new Error(extractError(data, "生成失败"));
+      try {
+        var response = await fetch(getNodeUrl() + "/v1/api/result?id=" + encodeURIComponent(id), {
+          headers: { "Authorization": "Bearer " + state.key },
+          signal: signal
+        });
+        var text = await response.text();
+        var data;
+        try { data = text ? JSON.parse(text) : {}; }
+        catch (e) { throw new Error("查询结果返回非 JSON：" + text.slice(0, 180)); }
+        if (!response.ok) throw new Error(extractError(data, "HTTP " + response.status));
+        transient = 0;
+        if (typeof onProgress === "function") onProgress(data);
+        if (isDone(data)) return data;
+        if (isFailed(data)) throw new Error(extractError(data, "生成失败"));
+      } catch (error) {
+        if (error && (error.name === "AbortError" || String(error).indexOf("Aborted") >= 0)) throw error;
+        transient += 1;
+        if (transient > 5) throw error;
+      }
     }
     throw new Error("生成超时（15 分钟），请稍后到历史中查看或重试");
   }

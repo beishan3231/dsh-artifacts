@@ -832,7 +832,7 @@
 
       <div class="batch-row">
         <label class="batch-label" for="batchRange">并发提交 <b id="batchValue">3</b> 个</label>
-        <input class="batch-slider" id="batchRange" type="range" min="1" max="5" step="1" value="3">
+        <input class="batch-slider" id="batchRange" type="range" min="3" max="5" step="1" value="3">
         <span class="batch-hint" id="batchHint">同时发起 3 个任务</span>
       </div>
 
@@ -1088,7 +1088,7 @@
       state.key = localStorage.getItem("grsai_key") || "";
       state.node = localStorage.getItem("grsai_node") || "cn";
       state.batch = Number(localStorage.getItem("grsai_batch") || 3);
-      if (!(state.batch >= 1 && state.batch <= 5)) state.batch = 3;
+      if (!(state.batch >= 3 && state.batch <= 5)) state.batch = 3;
       var raw = localStorage.getItem("grsai_history_v1");
       var parsed = raw ? JSON.parse(raw) : [];
       if (Array.isArray(parsed)) {
@@ -1497,7 +1497,7 @@
 
     syncStateFromControls();
     var model = currentModel();
-    var count = Math.max(1, Math.min(5, Number($("#batchRange").value) || 1));
+    var count = Math.max(3, Math.min(5, Number($("#batchRange").value) || 3));
     state.batch = count;
     try { localStorage.setItem("grsai_batch", String(count)); } catch (e) {}
 
